@@ -1,57 +1,33 @@
 
 import UIKit
+import RealmSwift
 
-//Сохранение при помощи UserDefaults
+//Сохранение при помощи Realm
+
+let realm = try! Realm()
+
+class MainDataRealm: Object {
+    @objc dynamic var id = currentId
+    @objc dynamic var type: String?
+    @objc dynamic var name: String?
+    @objc dynamic var power: String?
+    @objc dynamic var manufacture: String?
+    @objc dynamic var link: String?
+    @objc dynamic var imageSelected: Bool = false
+}
+
+var currentData = 0
+
+var currentId = 0
+
 let defaults = UserDefaults.standard
-
-
-final class MainData: Codable {
-    var type: String?
-    var name: String?
-    var power: String?
-    var manufacture: String?
-    var link: String?
-    var imageSelected: Bool = false
+func saveId() {
+    defaults.set(currentId, forKey: "currentId")
 }
 
-var dataCounter: Int! = -1
-
-var mainDataArray = [MainData]()
-
-var currentData: Int! = 0
-
-
-
-
-// Функция для сохранения данных
-func saveData() {
-    defaults.set(dataCounter, forKey: "dataCounter")
-    if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-        do {
-            let data = try PropertyListEncoder().encode(mainDataArray)
-            try data.write(to: documentsDirectory.appendingPathComponent("mainDataArray.plist"))
-            print("Данные сохранены успешно")
-        } catch {
-            print("Ошибка при сохранении данных: \(error.localizedDescription)")
-        }
-    }
+func loadId(){
+    currentId = defaults.integer(forKey: "currentId")
 }
-
-// Функция для загрузки данных
-func loadData() {
-    dataCounter = defaults.integer(forKey: "dataCounter")
-    if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-        do {
-            let data = try Data(contentsOf: documentsDirectory.appendingPathComponent("mainDataArray.plist"))
-            mainDataArray = try PropertyListDecoder().decode([MainData].self, from: data)
-            print("Данные загружены успешно")
-        } catch {
-            print("Ошибка при загрузке данных: \(error.localizedDescription)")
-        }
-    }
-}
-
-
 
 
 //Рисуем крестик

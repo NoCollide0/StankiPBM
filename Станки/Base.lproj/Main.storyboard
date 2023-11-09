@@ -550,7 +550,7 @@
                     </view>
                     <navigationItem key="navigationItem" id="Y1P-6a-Au4"/>
                     <connections>
-                        <outlet property="buttonView" destination="v2O-Mb-DT6" id="KNc-lJ-0WV"/>
+                        <outlet property="buttonView" destination="hk5-bb-RTZ" id="sb7-7X-pY1"/>
                         <outlet property="imageMainView" destination="y0s-lW-9Dj" id="BUO-Hs-nD7"/>
                         <outlet property="imageView" destination="Y2t-16-aGH" id="FmR-XK-Pb8"/>
                         <outlet property="link" destination="OWM-24-LRb" id="qsC-nk-5M8"/>

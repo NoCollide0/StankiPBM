@@ -1,5 +1,6 @@
 
 import UIKit
+import RealmSwift
 
 class CurrentDataVC: UIViewController {
 
@@ -21,11 +22,18 @@ class CurrentDataVC: UIViewController {
     
     @IBOutlet weak var editButton: UIBarButtonItem!
     
+    var currentMachine: MainDataRealm?
+    
+    
     
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let realm = try! Realm()
+        
+        currentMachine = realm.objects(MainDataRealm.self).filter("id == %@", currentData).first
         
         setupCurrentDataVC()
         
@@ -41,47 +49,47 @@ class CurrentDataVC: UIViewController {
     
     func setupCurrentDataVC() {
         //Картинка
-        if mainDataArray[currentData].imageSelected == true {
+        if currentMachine?.imageSelected == true {
             let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             let dataDirectory = documentsDirectory.appendingPathComponent("pbmStankiApp")
-            imageView.image = UIImage(contentsOfFile: dataDirectory.appendingPathComponent("\(currentData!).jpg").path)
+            imageView.image = UIImage(contentsOfFile: dataDirectory.appendingPathComponent("\(currentData).jpg").path)
         } else {
             imageView.image = UIImage(named: "defaultStanok")
         }
         
-        typeLabel.text = mainDataArray[currentData].type
-        nameLabel.text = mainDataArray[currentData].name
-        powerLabel.text = mainDataArray[currentData].power
-        manufactureLabel.text = mainDataArray[currentData].manufacture
+        typeLabel.text = currentMachine?.type
+        nameLabel.text = currentMachine?.name
+        powerLabel.text = currentMachine?.power
+        manufactureLabel.text = currentMachine?.manufacture
         
-        if mainDataArray[currentData].link == "" { //Проверка наличия текста в link
+        if currentMachine?.link == "" { //Проверка наличия текста в link
             linkLabel.text = "Документация: нет"
             checkLinkValidation = false
         } else {
-            if !mainDataArray[currentData].link!.hasPrefix(".") && !mainDataArray[currentData].link!.hasSuffix(".") && mainDataArray[currentData].link!.contains(".") { //Проверка валидности link
-                if mainDataArray[currentData].link!.hasPrefix("http://") || mainDataArray[currentData].link!.hasPrefix("https://") { //Код для полностью правильной ссылки
+            if currentMachine!.link!.hasPrefix(".") && currentMachine!.link!.hasSuffix(".") && currentMachine!.link!.contains(".") { //Проверка валидности link
+                if currentMachine!.link!.hasPrefix("http://") || currentMachine!.link!.hasPrefix("https://") { //Код для полностью правильной ссылки
                     checkLinkValidation = true
-                    validLink = URL(string: mainDataArray[currentData].link!)
+                    validLink = URL(string: currentMachine!.link!)
                     
                     //Настройка отображения linlLabel как ссылки
-                    let attributedText = NSMutableAttributedString(string: mainDataArray[currentData].link!)
-                    attributedText.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.blue, range: NSRange(location: 0, length: mainDataArray[currentData].link!.count))
-                    attributedText.addAttribute(NSAttributedString.Key.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: mainDataArray[currentData].link!.count))
+                    let attributedText = NSMutableAttributedString(string: currentMachine!.link!)
+                    attributedText.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.blue, range: NSRange(location: 0, length: currentMachine!.link!.count))
+                    attributedText.addAttribute(NSAttributedString.Key.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: currentMachine!.link!.count))
                     linkLabel.attributedText = attributedText
                 } else { //Код для не полностью правильной ссылки
                     checkLinkValidation = true
-                    validLink = URL(string: "http://\(mainDataArray[currentData].link!)")
-                    linkLabel.text = "\(mainDataArray[currentData].link!)"
+                    validLink = URL(string: "http://\(currentMachine!.link!)")
+                    linkLabel.text = "\(currentMachine!.link!)"
                     
                     //Настройка отображения linlLabel как ссылки
-                    let attributedText = NSMutableAttributedString(string: mainDataArray[currentData].link!)
-                    attributedText.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.blue, range: NSRange(location: 0, length: mainDataArray[currentData].link!.count))
-                    attributedText.addAttribute(NSAttributedString.Key.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: mainDataArray[currentData].link!.count))
+                    let attributedText = NSMutableAttributedString(string: currentMachine!.link!)
+                    attributedText.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.blue, range: NSRange(location: 0, length: currentMachine!.link!.count))
+                    attributedText.addAttribute(NSAttributedString.Key.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: currentMachine!.link!.count))
                     linkLabel.attributedText = attributedText
                 }
             } else {
                 checkLinkValidation = false
-                linkLabel.text = mainDataArray[currentData].link //Если ссылка не валидна то просто пишем текст
+                linkLabel.text = currentMachine!.link //Если ссылка не валидна то просто пишем текст
             }
         }
         
