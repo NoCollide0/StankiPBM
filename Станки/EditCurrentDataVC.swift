@@ -1,6 +1,7 @@
 
 
 import UIKit
+import RealmSwift
 
 class EditCurrentDataVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate {
 
@@ -18,11 +19,11 @@ class EditCurrentDataVC: UIViewController, UIImagePickerControllerDelegate, UINa
     
     @IBOutlet weak var link: UITextField!
     
-    @IBOutlet weak var buttonView: UIButton!
+    @IBOutlet weak var buttonView: UIView!
     
     var selectedImage: UIImage?
     
-    var stanokData = MainData()
+    var currentMachine = realm.objects(MainDataRealm.self).filter("id == %@", currentData).first
     
     
     
@@ -84,60 +85,61 @@ class EditCurrentDataVC: UIViewController, UIImagePickerControllerDelegate, UINa
         manufacture.delegate = self
         link.delegate = self
         
-        if mainDataArray[currentData].imageSelected == true {
+        if currentMachine!.imageSelected == true {
             let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             let dataDirectory = documentsDirectory.appendingPathComponent("pbmStankiApp")
-            imageView.image = UIImage(contentsOfFile: dataDirectory.appendingPathComponent("\(currentData!).jpg").path)
+            imageView.image = UIImage(contentsOfFile: dataDirectory.appendingPathComponent("\(currentData).jpg").path)
         } else {
             imageView.image = UIImage(named: "defaultStanok")
         }
         
-        type.text = mainDataArray[currentData].type
-        name.text = mainDataArray[currentData].name
-        power.text = mainDataArray[currentData].power
-        manufacture.text = mainDataArray[currentData].manufacture
-        link.text = mainDataArray[currentData].link
+        type.text = currentMachine!.type
+        name.text = currentMachine!.name
+        power.text = currentMachine!.power
+        manufacture.text = currentMachine!.manufacture
+        link.text = currentMachine!.link
     }
     
     func saveDataAfterEdit() {
-        stanokData.imageSelected = true
-        if let image = selectedImage {
-            stanokData.imageSelected = true
-            saveImageToDirectory(image)
-        } else {
-            stanokData.imageSelected = false
-            print("Пользователь не выбрал изображение")
+        do {
+            try realm.write {
+                currentMachine!.imageSelected = true
+                if let image = selectedImage {
+                    saveImageToDirectory(image)
+                } else {
+                    currentMachine!.imageSelected = false
+                    print("Пользователь не выбрал изображение")
+                }
+                if type.text?.trimmingCharacters(in: .whitespaces) == ""{
+                        currentMachine!.type = "Тип станка не введен"
+                    }else{
+                        currentMachine!.type = type.text?.trimmingCharacters(in: .whitespaces)
+                    }
+                    if name.text?.trimmingCharacters(in: .whitespaces) == ""{
+                        currentMachine!.name = "Имя станка не введено"
+                    }else{
+                        currentMachine!.name = name.text?.trimmingCharacters(in: .whitespaces)
+                    }
+                    if power.text?.trimmingCharacters(in: .whitespaces) == ""{
+                        currentMachine!.power = "Мощность не введена"
+                    }else{
+                        currentMachine!.power = power.text?.trimmingCharacters(in: .whitespaces)
+                    }
+                    if manufacture.text?.trimmingCharacters(in: .whitespaces) == ""{
+                        currentMachine!.manufacture = "Изготовитель не введен"
+                    }else{
+                        currentMachine!.manufacture = manufacture.text?.trimmingCharacters(in: .whitespaces)
+                    }
+                    if link.text?.trimmingCharacters(in: .whitespaces) == ""{
+                        currentMachine!.link = ""
+                    }else{
+                        currentMachine!.link = link.text?.trimmingCharacters(in: .whitespaces)
+                    }
+            }
+        } catch {
+            print("Ошибка при обновлении станка: \(error)")
         }
-        
-        if type.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.type = "Тип станка не введен"
-        }else{
-            stanokData.type = type.text?.trimmingCharacters(in: .whitespaces)
-        }
-        if name.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.name = "Имя станка не введено"
-        }else{
-            stanokData.name = name.text?.trimmingCharacters(in: .whitespaces)
-        }
-        if power.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.power = "Мощность не введена"
-        }else{
-            stanokData.power = power.text?.trimmingCharacters(in: .whitespaces)
-        }
-        if manufacture.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.manufacture = "Изготовитель не введен"
-        }else{
-            stanokData.manufacture = manufacture.text?.trimmingCharacters(in: .whitespaces)
-        }
-        if link.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.link = ""
-        }else{
-            stanokData.link = link.text?.trimmingCharacters(in: .whitespaces)
-        }
-        mainDataArray[currentData] = stanokData
-        saveData()
     }
-    
     
     
     func showConfirmationAlert() {
@@ -170,7 +172,7 @@ class EditCurrentDataVC: UIViewController, UIImagePickerControllerDelegate, UINa
     func saveImageToDirectory(_ image: UIImage) {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dataDirectory = documentsDirectory.appendingPathComponent("pbmStankiApp")
-        let imageName = "\(currentData!).jpg"
+        let imageName = "\(currentData).jpg"
 
         if let imageData = image.jpegData(compressionQuality: 1.0) {
             let imagePath = dataDirectory.appendingPathComponent(imageName)

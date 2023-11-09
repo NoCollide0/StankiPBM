@@ -1,5 +1,6 @@
 
 import UIKit
+import RealmSwift
 
 class MainScreenVC: UIViewController {
     
@@ -10,30 +11,23 @@ class MainScreenVC: UIViewController {
     
     var scrollView: UIScrollView!
     
+    let realm = try! Realm()
     
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let defaultValues: [String: Any] = ["dataCounter":-1]
-        UserDefaults.standard.register(defaults: defaultValues)
-        
-        
-        loadData()
+        loadId()
         addVStackView()
         addFirstView()
-        if dataCounter != -1 {
-            setupLoadViews()
-        }
+        buildData()
     }
     override func viewWillAppear(_ animated: Bool) {
         deleteSubviews()
         addVStackView()
         addFirstView()
-        if dataCounter != -1 {
-            setupLoadViews()
-        }
+        buildData()
     }
     
     
@@ -102,10 +96,15 @@ class MainScreenVC: UIViewController {
     }
     
     
+    func deleteSubviews(){
+        for subview in vStackView.subviews {
+                subview.removeFromSuperview()
+            }
+    }
     
     
-    func setupLoadViews() {
-        for i in 0...dataCounter {
+    func buildData() {
+        for i in realm.objects(MainDataRealm.self) {
             let bigView = UIView()
             bigView.translatesAutoresizingMaskIntoConstraints = false
             bigView.backgroundColor = UIColor.systemGray5
@@ -114,10 +113,10 @@ class MainScreenVC: UIViewController {
             
             let imageView = UIImageView()
             imageView.translatesAutoresizingMaskIntoConstraints = false
-            if mainDataArray[i].imageSelected == true {
+            if i.imageSelected == true {
                 let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
                 let dataDirectory = documentsDirectory.appendingPathComponent("pbmStankiApp")
-                imageView.image = UIImage(contentsOfFile: dataDirectory.appendingPathComponent("\(i).jpg").path)
+                imageView.image = UIImage(contentsOfFile: dataDirectory.appendingPathComponent("\(i.id).jpg").path)
             } else {
                 imageView.image = UIImage(named: "defaultStanok")
             }
@@ -127,31 +126,31 @@ class MainScreenVC: UIViewController {
             
             let type = UILabel()
             type.font = UIFont(name: "System", size: 12)
-            type.text = mainDataArray[i].type
+            type.text = i.type
             type.translatesAutoresizingMaskIntoConstraints = false
             bigView.addSubview(type)
             
             let name = UILabel()
             name.font = UIFont(name: "System", size: 12)
-            name.text = mainDataArray[i].name
+            name.text = i.name
             name.translatesAutoresizingMaskIntoConstraints = false
             bigView.addSubview(name)
             
             let power = UILabel()
             power.font = UIFont(name: "System", size: 12)
-            power.text = mainDataArray[i].power
+            power.text = i.power
             power.translatesAutoresizingMaskIntoConstraints = false
             bigView.addSubview(power)
             
             let manufacture = UILabel()
             manufacture.font = UIFont(name: "System", size: 12)
-            manufacture.text = mainDataArray[i].manufacture
+            manufacture.text = i.manufacture
             manufacture.translatesAutoresizingMaskIntoConstraints = false
             bigView.addSubview(manufacture)
             
             let link = UILabel()
             link.font = UIFont(name: "System", size: 12)
-            if mainDataArray[i].link == "" {
+            if i.link == "" {
                 link.text = "Документация: нет"
             }else{
                 link.text = "Документация: есть"
@@ -163,7 +162,7 @@ class MainScreenVC: UIViewController {
             let currentDataButton = UIButton()
             currentDataButton.translatesAutoresizingMaskIntoConstraints = false
             currentDataButton.setTitle(" ", for: .normal)
-            currentDataButton.tag = i
+            currentDataButton.tag = i.id
             currentDataButton.addTarget(self, action: #selector(currentDataButtonTapped), for: .touchUpInside)
             bigView.addSubview(currentDataButton)
             
@@ -183,12 +182,12 @@ class MainScreenVC: UIViewController {
             let deleteButton = UIButton()
             deleteButton.translatesAutoresizingMaskIntoConstraints = false
             deleteButton.setTitle(" ", for: .normal)
-            deleteButton.tag = i
+            deleteButton.tag = i.id
             deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
             deleteView.addSubview(deleteButton)
             
             NSLayoutConstraint.activate([
-                bigView.topAnchor.constraint(equalTo: vStackView.arrangedSubviews[i].bottomAnchor, constant: 15),
+                bigView.topAnchor.constraint(equalTo: vStackView.arrangedSubviews.last?.bottomAnchor ?? vStackView.topAnchor, constant: 15), // проблема
                 bigView.trailingAnchor.constraint(equalTo: vStackView.trailingAnchor, constant: -5),
                 bigView.leadingAnchor.constraint(equalTo: vStackView.leadingAnchor, constant: 5),
                 bigView.heightAnchor.constraint(equalToConstant: 150),
@@ -246,13 +245,6 @@ class MainScreenVC: UIViewController {
         }
     }
     
-    func deleteSubviews(){
-        for subview in vStackView.subviews {
-                subview.removeFromSuperview()
-            }
-    }
-    
-    
     
     //Кнопка создания
     @objc func createButtonTapped(){
@@ -278,16 +270,19 @@ class MainScreenVC: UIViewController {
             } catch {
                 print("Ошибка при удалении файла: \(error)")
             }
-            mainDataArray.remove(at: sender.tag)
-            dataCounter -= 1
+            do {
+                try self.realm.write {
+                    self.realm.delete(self.realm.objects(MainDataRealm.self).filter("id == %@", sender.tag).first!)
+                }
+            } catch {
+                print("Ошибка при удалении станка: \(error)")
+            }
+            
+            
             self.deleteSubviews()
             self.addVStackView()
             self.addFirstView()
-            if dataCounter != -1 {
-                self.setupLoadViews()
-            }
-            saveData()
-            
+            self.buildData()
         }
         
         let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)

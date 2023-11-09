@@ -1,5 +1,6 @@
 
 import UIKit
+import RealmSwift
 
 class NewVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate {
     
@@ -24,7 +25,7 @@ class NewVC: UIViewController, UIImagePickerControllerDelegate, UINavigationCont
     
     var selectedImage: UIImage?
     
-    var stanokData = MainData()
+    var newData = MainDataRealm()
     
     
 
@@ -75,43 +76,51 @@ class NewVC: UIViewController, UIImagePickerControllerDelegate, UINavigationCont
     
     //Кнопка готово
     @IBAction func doneButtonTapped(_ sender: Any) {
-        dataCounter += 1
         //Проверка выбрано ли изображение и сохранение
         if let image = selectedImage {
-            stanokData.imageSelected = true
+            newData.imageSelected = true
             saveImageToDirectory(image)
         } else {
-            stanokData.imageSelected = false
+            newData.imageSelected = false
             print("Пользователь не выбрал изображение")
         }
         
         if type.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.type = "Тип станка не введен"
+            newData.type = "Тип станка не введен"
         }else{
-            stanokData.type = type.text?.trimmingCharacters(in: .whitespaces)
+            newData.type = type.text?.trimmingCharacters(in: .whitespaces)
         }
         if name.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.name = "Имя станка не введено"
+            newData.name = "Имя станка не введено"
         }else{
-            stanokData.name = name.text?.trimmingCharacters(in: .whitespaces)
+            newData.name = name.text?.trimmingCharacters(in: .whitespaces)
         }
         if power.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.power = "Мощность не введна"
+            newData.power = "Мощность не введна"
         }else{
-            stanokData.power = power.text?.trimmingCharacters(in: .whitespaces)
+            newData.power = power.text?.trimmingCharacters(in: .whitespaces)
         }
         if manufacture.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.manufacture = "Изготовитель не введен"
+            newData.manufacture = "Изготовитель не введен"
         }else{
-            stanokData.manufacture = manufacture.text?.trimmingCharacters(in: .whitespaces)
+            newData.manufacture = manufacture.text?.trimmingCharacters(in: .whitespaces)
         }
         if link.text?.trimmingCharacters(in: .whitespaces) == ""{
-            stanokData.link = ""
+            newData.link = ""
         }else{
-            stanokData.link = link.text?.trimmingCharacters(in: .whitespaces)
+            newData.link = link.text?.trimmingCharacters(in: .whitespaces)
         }
-        mainDataArray.append(stanokData)
-        saveData()
+        
+        do {
+            try realm.write {
+                realm.add(newData)
+            }
+        } catch {
+            print("Ошибка при добавлении станка: \(error)")
+        }
+        
+        currentId += 1
+        saveId()
         navigationController?.popViewController(animated: true)
         
         
@@ -124,7 +133,7 @@ class NewVC: UIViewController, UIImagePickerControllerDelegate, UINavigationCont
     func saveImageToDirectory(_ image: UIImage) {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dataDirectory = documentsDirectory.appendingPathComponent("pbmStankiApp")
-        let imageName = "\(dataCounter!).jpg"
+        let imageName = "\(newData.id).jpg"
 
         if let imageData = image.jpegData(compressionQuality: 1.0) {
             let imagePath = dataDirectory.appendingPathComponent(imageName)
